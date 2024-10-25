@@ -37,7 +37,7 @@ namespace smarthome {
 
     const MPR121_TOUCH_SENSOR_TOUCHED_ID = 2148
     const MPR121_TOUCH_SENSOR_RELEASED_ID = 2149
-    //const PRESENCE_DETECTED_ID = 2147
+    const PRESENCE_DETECTED_ID = 2147
 
     /**
      * Initialize the touch controller.
