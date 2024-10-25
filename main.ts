@@ -150,11 +150,11 @@ namespace smarthome {
 
             previousTouchStatus = touchStatus
 
-            if (previousPresenceStatus === false && pins.digitalReadPin(DigitalPin.C9) === 0) {
+            if (previousPresenceStatus === false && pins.digitalReadPin(DigitalPin.C9) === 1) {
                 control.raiseEvent(PRESENCE_DETECTED_ID, 0)
                 previousPresenceStatus = true
             }
-            if (previousPresenceStatus === true && pins.digitalReadPin(DigitalPin.C9) === 1) {
+            if (previousPresenceStatus === true && pins.digitalReadPin(DigitalPin.C9) === 0) {
                 previousPresenceStatus = false
             }
             
