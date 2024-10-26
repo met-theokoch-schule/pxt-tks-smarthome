@@ -31,9 +31,16 @@ const enum TouchSensor {
     // T10 = 0b010000000000, //not used
     // T11 = 0b100000000000. //not used
 }
-
-//% weight=2 color=#AA278D icon="\uf015" block="Smarthome"
 namespace smarthome {
+
+    /**
+     * Code für die Touch Schalter
+     * based on https://github.com/mkleinsb/pxt-mpr121 by Michael Klein
+     * mpr 121 touch blocks based on touch.ts 0.17.5
+     * Auf Basis von https://github.com/1010Technologies/pxt-makerbit
+     * Copyright (c) 2018 Roger Wagner, Philipp Henkel & Michael Klein
+     * MIT License
+     */
 
     const MPR121_ADDRESS = 0x5A
     const TOUCH_STATUS_PAUSE_BETWEEN_READ = 50
@@ -357,8 +364,9 @@ namespace smarthome {
     }
 
     /**
-    * Code for the presence controller.
-    */
+     * Code for the presence controller.
+     * by Moritz Metelmann
+     */
 
     interface PresenceDetector {
         lastPresenceDetection: boolean
