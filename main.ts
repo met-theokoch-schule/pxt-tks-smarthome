@@ -1,37 +1,36 @@
+smarthome.onTouchSensorTouched(TouchSensor.S6, function () {
+    smarthome.SwitchAC(onoff.on)
+})
 smarthome.onTouchSensorTouched(TouchSensor.S0, function () {
-    basic.showLeds(`
-        # . . . #
-        . . . . .
-        . . . . .
-        . . . . .
-        # . . . #
-        `)
-})
-input.onPinTouchEvent(TouchPin.P1, input.buttonEventDown(), function () {
-    basic.showLeds(`
-        . . . . .
-        . . . . .
-        # # # . .
-        . . . . .
-        . . . . .
-        `)
-})
-input.onSound(DetectedSound.Loud, function () {
-    basic.showLeds(`
-        . . . . #
-        . . . . .
-        . . # . .
-        . . . . .
-        # . . . .
-        `)
+    smarthome.ShowWallLampColorPixel(0xe0acfe, 0xff00e3, 0xa300ff, 0x00dcff, 0xffaa00, 0xeaff00, 0x00FFFE, 0xfdd3f8)
+    smarthome.SwitchShades(openclose.open)
 })
 input.onButtonEvent(Button.A, input.buttonEventClick(), function () {
     basic.showIcon(IconNames.No)
 })
-smarthome.onPresenceDetected(function () {
-    basic.showIcon(IconNames.Butterfly)
-    music.playTone(262, music.beat(BeatFraction.Whole))
+smarthome.onTouchSensorTouched(TouchSensor.S8, function () {
+    smarthome.DimAC(10)
 })
+smarthome.onTouchSensorTouched(TouchSensor.S1, function () {
+    smarthome.ShowWallLampColorPixel(0x4df243, 0x0087ff, 0xfdd3f8, 0x7FFF00, 0x00FF00, 0x00FF7F, 0x00FFFE, 0x0040FF)
+    smarthome.SwitchShades(openclose.close)
+})
+input.onButtonEvent(Button.B, input.buttonEventClick(), function () {
+	
+})
+smarthome.onTouchSensorTouched(TouchSensor.S4, function () {
+    smarthome.SwitchLampOff(lampennamen.dl1)
+})
+smarthome.onTouchSensorTouched(TouchSensor.S2, function () {
+    smarthome.SwitchLampOff(lampennamen.wl)
+})
+smarthome.onTouchSensorTouched(TouchSensor.S3, function () {
+    smarthome.ShowLampColor(lampennamen.dl1, 0xffffff)
+})
+smarthome.onTouchSensorTouched(TouchSensor.S7, function () {
+    smarthome.SwitchAC(onoff.off)
+})
+let range: neopixel.Strip = null
 const enum TouchSensor {
     S0 = 0b000000000001,
     S1 = 0b000000000010,
@@ -46,7 +45,88 @@ const enum TouchSensor {
     // T10 = 0b010000000000, //not used
     // T11 = 0b100000000000. //not used
 }
+const enum onoff {
+    //% block="an"
+    on = 1,
+    //% block="aus"
+    off = 2,
+}
+const enum openclose {
+    //% block="öffnen"
+    open = 1,
+    //% block="schließen"
+    close = 2,
+}
+const enum lampennamen {
+    //% block="Deckenlampe 1"
+    dl1 = 0,
+    //% block="Deckenlampe 2"
+    dl2 = 1,
+    //% block="Außenlampe"
+    al = 2,
+    //% block="Wandlampe"
+    wl = 3
+}
 namespace smarthome {
+
+    /**
+     * Code für den Rolladen
+     * by Moritz Metelmann
+     */
+
+    /**
+    * Öffnet/Schließt den Rolladen
+    */
+    //% block="$state shades"
+    //% block.loc.de="Rolladen $state"
+    //% inlineInputMode=inline
+    export function SwitchShades(state: openclose = openclose.open) {
+        if (state === openclose.open) {
+            pins.servoWritePin(AnalogPin.C16, 0)
+            basic.pause(800)
+            pins.servoSetPulse(AnalogPin.C16, 0)
+        } else {
+            pins.servoWritePin(AnalogPin.C16, 180)
+            basic.pause(800)
+            pins.servoSetPulse(AnalogPin.C16, 0)
+        }
+    }
+    
+    /**
+     * Code für die Klimaanlage
+     * by Moritz Metelmann
+     */
+
+    /**
+    * Schaltet die Klimaanlage an/aus
+    */
+    //% block="switch aircondition $state"
+    //% block.loc.de="schalte die Klimaanlage $state"
+    //% inlineInputMode=inline
+    export function SwitchAC(state: onoff = onoff.on) {
+        if (state === onoff.on) {
+            motors.dualMotorPower(Motor.M0, 100)
+        } else {
+            motors.dualMotorPower(Motor.M0, 0)
+        }
+    }
+
+    /**
+    * Schaltet die Klimaanlage auf eine prozentuale Geschwindiktei
+    */
+    //% blockId=CalliBrightness block="set aircondition to %c %"
+    //% block.loc.de="setze Klimaanlage auf %c %"
+    //% c.defl=80
+    //% c.min=25 c.max=100
+    export function DimAC(c: number) {
+        if (c < 25) {
+            c = 25
+        }
+        if (c > 100) {
+            c = 100
+        }
+        motors.dualMotorPower(Motor.M0, c)
+    }
 
     /**
      * Code für NeoPixel LED's (Lampen)
@@ -56,25 +136,16 @@ namespace smarthome {
      */
 
     let Lampen = neopixel.create(DigitalPin.C8, 11, NeoPixelMode.RGB)
-
-    const enum cbrightness {
-        //% block="100"
-        hp1 = 1,
-        //% block="80"
-        hp2 = 2,
-        //% block="60"
-        hp6 = 6,
-        //% block="40"
-        hp25 = 25,
-        //% block="20"
-        hp85 = 85
-    }
+    let dl1 = Lampen.range(0, 0);
+    let dl2 = Lampen.range(1, 1);
+    let al = Lampen.range(2, 2);
+    let wl = Lampen.range(3, 10);
 
     let ccolors = [0xff0000, 0xFF7F00, 0xFFFE00, 0x7FFF00, 0x00FF00, 0x00FF7F,
         0x00FFFE, 0x0040FF, 0x0000FF, 0x6000FF, 0xFE00FF, 0xFF0040]
 
-    //% block="Set wall light to $color1 $color2 $color3 $color4 $color5 $color6 $color7 $color8"
-    //% block.loc.de="Setze Wandlampe auf $color1 $color2 $color3 $color4 $color5 $color6 $color7 $color8"       
+    //% block="set wall light to $color1 $color2 $color3 $color4 $color5 $color6 $color7 $color8"
+    //% block.loc.de="setze Wandlampe auf $color1 $color2 $color3 $color4 $color5 $color6 $color7 $color8"       
     //% color1.shadow="LampenColorNumberPicker"  color1.defl=0xff0000
     //% color2.shadow="LampenColorNumberPicker"  color2.defl=0xFF7F00
     //% color3.shadow="LampenColorNumberPicker"  color3.defl=0xFFFE00
@@ -84,7 +155,7 @@ namespace smarthome {
     //% color7.shadow="LampenColorNumberPicker"  color7.defl=0x00FFFE
     //% color8.shadow="LampenColorNumberPicker"  color8.defl=0x0040FF
     //% inlineInputMode=inline
-    export function ShowColorPixel(color1: number, color2: number, color3: number, color4: number, color5: number, color6: number, color7: number, color8: number) {
+    export function ShowWallLampColorPixel(color1: number, color2: number, color3: number, color4: number, color5: number, color6: number, color7: number, color8: number) {
         Lampen.setPixelColor(3, color1)
         Lampen.setPixelColor(4, color2)
         Lampen.setPixelColor(5, color3)
@@ -93,6 +164,37 @@ namespace smarthome {
         Lampen.setPixelColor(8, color6)
         Lampen.setPixelColor(9, color7)
         Lampen.setPixelColor(10, color8)
+        Lampen.show()
+    }
+
+    /**
+    * Schalte eine Lampe in einer Farbe
+    */
+    //% block="set $lampe to $color"
+    //% block.loc.de="setze $lampe auf $color"
+    //% color.shadow="LampenColorNumberPicker" color.defl='#ffffff'
+    //% inlineInputMode=inline
+    export function ShowLampColor(lampe: lampennamen=lampennamen.dl1, color: number) {
+        if (lampe < 3) {
+            Lampen.setPixelColor(lampe, color)
+        } else { // Wandlampe
+            wl.showColor(color)
+        }
+        Lampen.show()
+    }
+
+    /**
+    * Schalte eine Lampe aus
+    */
+    //% block="switch $lampe off"
+    //% block.loc.de="schalte $lampe aus"
+    //% inlineInputMode=inline
+    export function SwitchLampOff(lampe: lampennamen = lampennamen.dl1) {
+        if (lampe < 3) {
+            Lampen.setPixelColor(lampe, 0x000000)
+        } else { // Wandlampe
+            wl.showColor(0x000000)
+        }
         Lampen.show()
     }
 
@@ -415,9 +517,9 @@ namespace smarthome {
         }
 
         export function configureThresholds(address: number, touch: number, release: number): void {
-            for (let i = 0; i < 12; i++) {
-                configure(address, Config.E0TTH + i * 2, touch)
-                configure(address, Config.E0RTH + i * 2, release)
+            for (let k = 0; k < 12; k++) {
+                configure(address, Config.E0TTH + k * 2, touch)
+                configure(address, Config.E0RTH + k * 2, release)
             }
         }
 
