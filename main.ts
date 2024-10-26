@@ -1,5 +1,11 @@
 smarthome.onTouchSensorTouched(TouchSensor.S0, function () {
-	
+    basic.showLeds(`
+        # . . . #
+        . . . . .
+        . . . . .
+        . . . . .
+        # . . . #
+        `)
 })
 input.onPinTouchEvent(TouchPin.P1, input.buttonEventDown(), function () {
     basic.showLeds(`
@@ -8,6 +14,15 @@ input.onPinTouchEvent(TouchPin.P1, input.buttonEventDown(), function () {
         # # # . .
         . . . . .
         . . . . .
+        `)
+})
+input.onSound(DetectedSound.Loud, function () {
+    basic.showLeds(`
+        . . . . #
+        . . . . .
+        . . # . .
+        . . . . .
+        # . . . .
         `)
 })
 input.onButtonEvent(Button.A, input.buttonEventClick(), function () {
@@ -32,6 +47,68 @@ const enum TouchSensor {
     // T11 = 0b100000000000. //not used
 }
 namespace smarthome {
+
+    /**
+     * Code für NeoPixel LED's (Lampen)
+     * based on https://github.com/MKleinSB/pxt-callicolor/blob/master/callicolor.ts
+     * by Michael Klein which took parts from
+     * https://github.com/BrightWearables/pxt-microbit-brightboard
+     */
+
+    let Lampen = neopixel.create(DigitalPin.C8, 11, NeoPixelMode.RGB)
+
+    const enum cbrightness {
+        //% block="100"
+        hp1 = 1,
+        //% block="80"
+        hp2 = 2,
+        //% block="60"
+        hp6 = 6,
+        //% block="40"
+        hp25 = 25,
+        //% block="20"
+        hp85 = 85
+    }
+
+    let ccolors = [0xff0000, 0xFF7F00, 0xFFFE00, 0x7FFF00, 0x00FF00, 0x00FF7F,
+        0x00FFFE, 0x0040FF, 0x0000FF, 0x6000FF, 0xFE00FF, 0xFF0040]
+
+    //% block="Set wall light to $color1 $color2 $color3 $color4 $color5 $color6 $color7 $color8"
+    //% block.loc.de="Setze Wandlampe auf $color1 $color2 $color3 $color4 $color5 $color6 $color7 $color8"       
+    //% color1.shadow="LampenColorNumberPicker"  color1.defl=0xff0000
+    //% color2.shadow="LampenColorNumberPicker"  color2.defl=0xFF7F00
+    //% color3.shadow="LampenColorNumberPicker"  color3.defl=0xFFFE00
+    //% color4.shadow="LampenColorNumberPicker"  color4.defl=0x7FFF00
+    //% color5.shadow="LampenColorNumberPicker"  color5.defl=0x00FF00
+    //% color6.shadow="LampenColorNumberPicker"  color6.defl=0x00FF7F
+    //% color7.shadow="LampenColorNumberPicker"  color7.defl=0x00FFFE
+    //% color8.shadow="LampenColorNumberPicker"  color8.defl=0x0040FF
+    //% inlineInputMode=inline
+    export function ShowColorPixel(color1: number, color2: number, color3: number, color4: number, color5: number, color6: number, color7: number, color8: number) {
+        Lampen.setPixelColor(3, color1)
+        Lampen.setPixelColor(4, color2)
+        Lampen.setPixelColor(5, color3)
+        Lampen.setPixelColor(6, color4)
+        Lampen.setPixelColor(7, color5)
+        Lampen.setPixelColor(8, color6)
+        Lampen.setPixelColor(9, color7)
+        Lampen.setPixelColor(10, color8)
+        Lampen.show()
+    }
+
+    /**
+    * Custom color picker
+    */
+    //% blockId=LampenColorNumberPicker block="%value"
+    //% blockHidden=true
+    //% shim=TD_ID
+    //% value.fieldEditor="colornumber" value.fieldOptions.decompileLiterals=true
+    //% weight=150
+    //% value.fieldOptions.colours='["#ffffff","#ff0000","#ffaa00","#ffdc00","#ffff00","#eaff00","#8eff00","#4df243","#42b87f","#00ffdc","#00dcff","#00a3ff","#0087ff","#acb3f3","#e0acfe","#a300ff","#ea00ff","#ff00e3","#fdd3f8","#f1d07e","#a8b5f5","#C3C6D8", "#f3f2da","#727474", "#000000"]'
+    //% value.fieldOptions.columns=5 value.fieldOptions.className='rgbColorPicker'  
+    export function CalliColorNumberPicker(value: number) {
+        return value;
+    }
 
     /**
      * Code für die Touch Schalter
