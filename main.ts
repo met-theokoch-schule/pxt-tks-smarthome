@@ -1,3 +1,6 @@
+smarthome.onTouchSensorTouched(TouchSensor.S0, function () {
+	
+})
 input.onPinTouchEvent(TouchPin.P1, input.buttonEventDown(), function () {
     basic.showLeds(`
         . . . . .
@@ -15,18 +18,18 @@ smarthome.onPresenceDetected(function () {
     music.playTone(262, music.beat(BeatFraction.Whole))
 })
 const enum TouchSensor {
-    T0 = 0b000000000001,
-    T1 = 0b000000000010,
-    T2 = 0b000000000100,
-    T3 = 0b000000001000,
-    T4 = 0b000000010000,
-    T5 = 0b000000100000,
-    T6 = 0b000001000000,
-    T7 = 0b000010000000,
-    T8 = 0b000100000000,
-    T9 = 0b001000000000,
-    T10 = 0b010000000000,
-    T11 = 0b100000000000
+    S0 = 0b000000000001,
+    S1 = 0b000000000010,
+    S2 = 0b000000000100,
+    S3 = 0b000000001000,
+    S4 = 0b000000010000,
+    S5 = 0b000000100000,
+    S6 = 0b000001000000,
+    S7 = 0b000010000000,
+    S8 = 0b000100000000,
+    S9 = 0b001000000000,
+    // T10 = 0b010000000000, //not used
+    // T11 = 0b100000000000. //not used
 }
 
 //% weight=2 color=#AA278D icon="\uf015" block="Smarthome"
