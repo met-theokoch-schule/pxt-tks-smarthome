@@ -1,12 +1,19 @@
-// A Calliope makecode extension for a custom build smarthome model
-// Theo-Koch-Schule Grünberg 2024
-// by Christian Zeuch & Moritz Metelmann
-// based on https://github.com/mkleinsb/pxt-mpr121 by Michael Klein
-// mpr 121 touch blocks based on touch.ts 0.17.5
-// Auf Basis von https://github.com/1010Technologies/pxt-makerbit
-// Copyright (c) 2018 Roger Wagner, Philipp Henkel & Michael Klein
-// MIT License
-
+input.onPinTouchEvent(TouchPin.P1, input.buttonEventDown(), function () {
+    basic.showLeds(`
+        . . . . .
+        . . . . .
+        # # # . .
+        . . . . .
+        . . . . .
+        `)
+})
+input.onButtonEvent(Button.A, input.buttonEventClick(), function () {
+    basic.showIcon(IconNames.No)
+})
+smarthome.onPresenceDetected(function () {
+    basic.showIcon(IconNames.Butterfly)
+    music.playTone(262, music.beat(BeatFraction.Whole))
+})
 const enum TouchSensor {
     T0 = 0b000000000001,
     T1 = 0b000000000010,
@@ -24,7 +31,7 @@ const enum TouchSensor {
 
 //% weight=2 color=#AA278D icon="\uf015" block="Smarthome"
 namespace smarthome {
-    
+
     const MPR121_ADDRESS = 0x5A
     const TOUCH_STATUS_PAUSE_BETWEEN_READ = 50
 
@@ -37,7 +44,7 @@ namespace smarthome {
 
     const MPR121_TOUCH_SENSOR_TOUCHED_ID = 2148
     const MPR121_TOUCH_SENSOR_RELEASED_ID = 2149
-    const PRESENCE_DETECTED_ID = 2147
+    
 
     /**
      * Initialize the touch controller.
@@ -123,7 +130,6 @@ namespace smarthome {
 
     function detectAndNotifyTouchEvents() {
         let previousTouchStatus = 0
-        let previousPresenceStatus = false
         
         while (true) {
             const touchStatus = mpr121.readTouchStatus(MPR121_ADDRESS)
@@ -150,26 +156,8 @@ namespace smarthome {
 
             previousTouchStatus = touchStatus
 
-            if (previousPresenceStatus === false && pins.digitalReadPin(DigitalPin.C9) === 1) {
-                control.raiseEvent(PRESENCE_DETECTED_ID, 0)
-                previousPresenceStatus = true
-            }
-            if (previousPresenceStatus === true && pins.digitalReadPin(DigitalPin.C9) === 0) {
-                previousPresenceStatus = false
-            }
-            
             basic.pause(TOUCH_STATUS_PAUSE_BETWEEN_READ)
         }
-    }
-
-    // Änderungen gemacht :(
-    //% blockId=smarthome_presence_detected
-    //% block="wenn Präsenz gemeldet"
-    //% weight=65
-    export function onPresenceDetected(handler: () => void) {
-        control.onEvent(PRESENCE_DETECTED_ID, 0, () => {
-            handler()
-        })
     }
 
     /**
@@ -190,102 +178,10 @@ namespace smarthome {
             setupContextAndNotify(handler)
         })
     }
-
-    /**
-    * Mache etwas, wenn ein spezieller Sensor losgelassen wird.
-    * Ein Loslass-Ereignis wird am Ende der Berührung ausgeführt.
-    * @param sensor der Touchsensor der überwacht werden soll, z.B.: TouchSensor.T0
-    * @param handler body code der beim Loslassen des Sensors ausgeführt werden soll
-    */
-
-    //% blockId=mpr121_touch_on_touch_sensor_released
-    //% block="wenn Berührungssensor | %sensor | losgelassen"
-    //% sensor.fieldEditor="gridpicker" sensor.fieldOptions.columns=3
-    //% sensor.fieldOptions.tooltips="false"
-    //% weight=64
-    export function onTouchSensorReleased(sensor: TouchSensor, handler: () => void) {
-        initTouchController()
-        control.onEvent(MPR121_TOUCH_SENSOR_RELEASED_ID, sensor, () => {
-            setupContextAndNotify(handler)
-        })
-    }
-
-    /**
-    * Mache etwas, wenn ein beliebiger Sensor berührt wird.
-    * @param handler body code to run when event is raised
-    */
-
-    // blockId=mpr121_touch_on_touched
-    // block="wenn beliebiger Sensor berührt"
-    // weight=60
-    export function onAnyTouchSensorTouched(handler: () => void) {
-        initTouchController()
-        control.onEvent(MPR121_TOUCH_SENSOR_TOUCHED_ID, EventBusValue.MICROBIT_EVT_ANY, () => {
-            setupContextAndNotify(handler)
-        })
-    }
-
-    /**
-    * Mache etwas, wenn ein beliebiger Sensor losgelassen wird.
-    * @param handler body code to run when event is raised
-    */
-
-    // blockId=mpr121_touch_on_released
-    // block="wenn beliebiger Sensor losgelassen"
-    // weight=59
-    export function onAnyTouchSensorReleased(handler: () => void) {
-        initTouchController()
-        control.onEvent(MPR121_TOUCH_SENSOR_RELEASED_ID, EventBusValue.MICROBIT_EVT_ANY, () => {
-            setupContextAndNotify(handler)
-        })
-    }
-
+ 
     function setupContextAndNotify(handler: () => void) {
         touchController.lastEventValue = control.eventValue()
         handler()
-    }
-
-    /**
-     * Gibt die Indexnummer des letzten Berührungsereignisses das empfangen wurde zurück.
-     * Das kann entweder ein Berühr- oder Loslassereignis sein.
-     * Dieser Block ist dafür gedacht innerhalb der touch event handler verwendet zu werden.
-     */
-
-    // blockId="mpr121_touch_current_touch_sensor
-    // block="zuletzt berührter Sensor"
-    // weight=50
-    export function touchSensor(): number {
-        initTouchController()
-        if (touchController.lastEventValue !== 0) {
-            return getSensorIndexFromSensorBitField(touchController.lastEventValue)
-        } else {
-            return 0
-        }
-    }
-
-    function getSensorIndexFromSensorBitField(touchSensorBit: TouchSensor) {
-        let bit = TouchSensor.T11
-        for (let sensorIndex = 0; sensorIndex <= 11; sensorIndex++) {
-            if ((bit & touchSensorBit) !== 0) {
-                return 11 - sensorIndex // return first hit
-            }                         // Pinnummern an Breakoutboard angepasst.
-            bit >>= 1
-        }
-        return 0
-    }
-
-    /**
-     * Gibt wahr zurück, wenn ein spezieller Touchsensor gerade berührt wurde. Ansonsten falsch.
-     * @param sensor the touch sensor to be checked, eg: TouchSensor.T0
-     */
-
-    // blockId="mpr121_touch_is_touch_sensor_touched" block="Berührungssensor | %sensor | wird berührt"
-    // sensor.fieldEditor="gridpicker" sensor.fieldOptions.columns=3
-    // sensor.fieldOptions.tooltips="false"
-    // weight=40
-    export function isTouched(sensor: TouchSensor): boolean {
-        initTouchController()
-        return (touchController.lastTouchStatus & sensor) !== 0
     }
 
     // Communication module for MPR121 capacitive touch sensor controller
@@ -456,4 +352,72 @@ namespace smarthome {
             return pins.i2cReadNumber(address, NumberFormat.UInt16LE)
         }
     }
+
+    /**
+    * Code for the presence controller.
+    */
+
+    interface PresenceDetector {
+        lastPresenceDetection: boolean
+    }
+
+    let presenceDetector: PresenceDetector
+    const PRESENCE_DETECTED_ID = 2147
+
+    /**
+     * Initialize the presence controller.
+     */
+
+    //% blockId="presence_init" block="initialisiere Präsenz-Sensor"
+    //% weight=70
+    function initPresenceDetector(): void {
+
+        if (!!presenceDetector) {
+            return
+        }
+
+        presenceDetector = {
+            lastPresenceDetection: false
+        }
+
+        control.inBackground(detectAndNotifyPresenceDetector)
+    }
+
+    function detectAndNotifyPresenceDetector() {
+        let previousPresenceStatus = false;
+
+        while (true) {
+            if (previousPresenceStatus == false && pins.digitalReadPin(DigitalPin.C9) == 0) {
+                control.raiseEvent(PRESENCE_DETECTED_ID, 0);
+                previousPresenceStatus = true;
+            }
+            if (previousPresenceStatus == true && pins.digitalReadPin(DigitalPin.C9) == 1) {
+                previousPresenceStatus = false;
+            }
+
+            basic.pause(TOUCH_STATUS_PAUSE_BETWEEN_READ)
+        }
+
+
+    }
+
+    //% blockId=smarthome_presence_detected
+    //% block="wenn Präsenz gemeldet"
+    //% weight=65
+    export function onPresenceDetected(handler: () => void) {
+        initPresenceDetector();
+        control.onEvent(PRESENCE_DETECTED_ID, EventBusValue.MICROBIT_EVT_ANY, () => {
+            handler();
+        })
+    }
 }
+basic.showLeds(`
+    . . . . .
+    . . . . .
+    . . # . .
+    . . . . .
+    . . . . .
+    `)
+basic.forever(function () {
+	
+})
